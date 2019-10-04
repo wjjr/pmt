@@ -8,13 +8,15 @@
 #include "algorithms.h"
 #include "error.h"
 
-static const char optstring[] = "a:ce:hp:v";
+static const char optstring[] = "a:ce:hp:qv";
 static const struct option longopts[] = {
         {"algorithm", required_argument, NULL, 'a'},
         {"count",     no_argument,       NULL, 'c'},
         {"edit",      required_argument, NULL, 'e'},
         {"help",      no_argument,       NULL, 'h'},
         {"pattern",   required_argument, NULL, 'p'},
+        {"quiet",     no_argument,       NULL, 'q'},
+        {"verbose",   no_argument,       NULL, 'v'},
         {NULL,        no_argument,       NULL, '\0'}
 };
 
@@ -47,7 +49,7 @@ static void usage(int status) {
 int main(int argc, char *argv[]) {
     int opt;
     const struct algorithm *algorithm = NULL;
-    unsigned char only_show_count = 0, max_edit = 0, loglevel = 0;
+    unsigned char only_show_count = 0, max_edit = 0;
     const char **patterns = NULL;
     struct file **files = NULL;
     unsigned int patterns_count = 0, files_count = 0;
@@ -107,8 +109,11 @@ int main(int argc, char *argv[]) {
                 fclose(fp);
             }
                 break;
+            case 'q':
+                log_silence();
+                break;
             case 'v':
-                ++loglevel;
+                log_increase_level();
                 break;
             default:
                 usage(EXIT_MISTAKE);
@@ -136,7 +141,7 @@ int main(int argc, char *argv[]) {
             die(EXIT_MISTAKE, errno, "%s", filename);
         else if (st.st_size == 0) {
             fclose(fp);
-            log_info(loglevel, "%s: empty file, ignoring", filename);
+            log_info("%s: empty file, ignoring", filename);
         } else {
             files[files_count] = malloc(sizeof(struct file));
             files[files_count]->fp = fp;
@@ -160,16 +165,16 @@ int main(int argc, char *argv[]) {
     if (algorithm == NULL)
         algorithm = choose_algorithm(context);
 
-    if (loglevel >= DEBUG) {
+    if (log_get_loglevel() >= DEBUG) {
         unsigned int i;
 
-        log_debug(loglevel, "algorithm=%s, only_count=%s, max_edit=%d, patterns_count=%d, files_count=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, patterns_count, files_count);
+        log_debug("algorithm=%s, only_count=%s, max_edit=%d, patterns_count=%d, files_count=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, patterns_count, files_count);
 
         for (i = 0; i < patterns_count; ++i)
-            log_debug(loglevel, "pattern %d: |%s|", i + 1, patterns[i]);
+            log_debug("pattern %d: |%s|", i + 1, patterns[i]);
 
         for (i = 0; i < files_count; ++i)
-            log_debug(loglevel, "file %d: %s", i + 1, files[i]->name);
+            log_debug("file %d: %s", i + 1, files[i]->name);
     }
 
     return algorithm->search(context);

@@ -7,6 +7,7 @@
 #include <stdarg.h>
 
 static const char *error_log_progname;
+static enum loglevel loglevel = WARN;
 
 static void error_log(unsigned char status, int errnum, const char *message_format, va_list args) {
     fprintf(stderr, "%s: ", error_log_progname);
@@ -32,7 +33,20 @@ const char *log_get_progname(void) {
     return error_log_progname;
 }
 
-void log_info(unsigned char loglevel, const char *message_format, ...) {
+void log_increase_level() {
+    if (loglevel != SILENT)
+        ++loglevel;
+}
+
+void log_silence() {
+    loglevel = SILENT;
+}
+
+enum loglevel log_get_loglevel() {
+    return loglevel;
+}
+
+void log_info(const char *message_format, ...) {
     if (loglevel >= INFO) {
         va_list args;
 
@@ -42,7 +56,7 @@ void log_info(unsigned char loglevel, const char *message_format, ...) {
     }
 }
 
-void log_warn(unsigned char loglevel, const char *message_format, ...) {
+void log_warn(const char *message_format, ...) {
     if (loglevel >= WARN) {
         va_list args;
 
@@ -52,7 +66,7 @@ void log_warn(unsigned char loglevel, const char *message_format, ...) {
     }
 }
 
-void log_error(unsigned char loglevel, const char *message_format, ...) {
+void log_error(const char *message_format, ...) {
     if (loglevel >= ERROR) {
         va_list args;
 
@@ -62,7 +76,7 @@ void log_error(unsigned char loglevel, const char *message_format, ...) {
     }
 }
 
-void log_debug(unsigned char loglevel, const char *message_format, ...) {
+void log_debug(const char *message_format, ...) {
     if (loglevel >= DEBUG) {
         va_list args;
 

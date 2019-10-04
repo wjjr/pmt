@@ -7,9 +7,9 @@
 
 enum loglevel {
     SILENT,
-    INFO,
-    WARN,
     ERROR,
+    WARN,
+    INFO,
     DEBUG
 };
 
@@ -17,13 +17,19 @@ void log_set_progname(const char *progname);
 
 const char *log_get_progname(void);
 
-void log_info(unsigned char loglevel, const char *message_format, ...);
+void log_increase_level();
 
-void log_warn(unsigned char loglevel, const char *message_format, ...);
+void log_silence();
 
-void log_error(unsigned char loglevel, const char *message_format, ...);
+enum loglevel log_get_loglevel();
 
-void log_debug(unsigned char loglevel, const char *message_format, ...);
+void log_info(const char *message_format, ...);
+
+void log_warn(const char *message_format, ...);
+
+void log_error(const char *message_format, ...);
+
+void log_debug(const char *message_format, ...);
 
 void die(unsigned char status, int errnum, const char *message_format, ...);
 
