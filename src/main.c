@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
             die(EXIT_MISTAKE, errno, "%s", filename);
         else if (st.st_size == 0) {
             fclose(fp);
-            log_info("%s: empty file, ignoring", filename);
+            log_print(INFO, "%s: empty file, ignoring", filename);
         } else {
             files[files_count] = malloc(sizeof(struct file));
             files[files_count]->fp = fp;
@@ -168,13 +168,13 @@ int main(int argc, char *argv[]) {
     if (log_get_loglevel() >= DEBUG) {
         unsigned int i;
 
-        log_debug("algorithm=%s, only_count=%s, max_edit=%d, patterns_count=%d, files_count=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, patterns_count, files_count);
+        log_print(DEBUG, "algorithm=%s, only_count=%s, max_edit=%d, patterns_count=%d, files_count=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, patterns_count, files_count);
 
         for (i = 0; i < patterns_count; ++i)
-            log_debug("pattern %d: |%s|", i + 1, patterns[i]);
+            log_print(DEBUG, "pattern %d: |%s|", i + 1, patterns[i]);
 
         for (i = 0; i < files_count; ++i)
-            log_debug("file %d: %s", i + 1, files[i]->name);
+            log_print(DEBUG, "file %d: %s", i + 1, files[i]->name);
     }
 
     return algorithm->search(context);

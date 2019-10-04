@@ -6,6 +6,7 @@
 #define EXIT_MISTAKE 2
 
 enum loglevel {
+    FATAL,
     SILENT,
     ERROR,
     WARN,
@@ -23,13 +24,7 @@ void log_silence();
 
 enum loglevel log_get_loglevel();
 
-void log_info(const char *message_format, ...);
-
-void log_warn(const char *message_format, ...);
-
-void log_error(const char *message_format, ...);
-
-void log_debug(const char *message_format, ...);
+void log_print(enum loglevel loglvl, const char *message_format, ...);
 
 void die(unsigned char status, int errnum, const char *message_format, ...);
 

@@ -9,8 +9,27 @@
 static const char *error_log_progname;
 static enum loglevel loglevel = WARN;
 
-static void error_log(unsigned char status, int errnum, const char *message_format, va_list args) {
-    fprintf(stderr, "%s: ", error_log_progname);
+static __inline__ char error_prefix(enum loglevel loglvl) {
+    switch (loglvl) {
+        case FATAL:
+            return 'F';
+        case SILENT:
+            return 'S';
+        case ERROR:
+            return 'E';
+        case WARN:
+            return 'W';
+        case INFO:
+            return 'I';
+        case DEBUG:
+            return 'D';
+        default:
+            return '*';
+    }
+}
+
+static void error_log(enum loglevel loglvl, unsigned char status, int errnum, const char *message_format, va_list args) {
+    fprintf(stderr, "%c: %s: ", error_prefix(loglvl), error_log_progname);
 
     vfprintf(stderr, message_format, args);
 
@@ -46,42 +65,12 @@ enum loglevel log_get_loglevel() {
     return loglevel;
 }
 
-void log_info(const char *message_format, ...) {
-    if (loglevel >= INFO) {
+void log_print(enum loglevel loglvl, const char *message_format, ...) {
+    if (loglvl <= loglevel) {
         va_list args;
 
         va_start(args, message_format);
-        error_log(0, 0, message_format, args);
-        va_end(args);
-    }
-}
-
-void log_warn(const char *message_format, ...) {
-    if (loglevel >= WARN) {
-        va_list args;
-
-        va_start(args, message_format);
-        error_log(0, 0, message_format, args);
-        va_end(args);
-    }
-}
-
-void log_error(const char *message_format, ...) {
-    if (loglevel >= ERROR) {
-        va_list args;
-
-        va_start(args, message_format);
-        error_log(0, 0, message_format, args);
-        va_end(args);
-    }
-}
-
-void log_debug(const char *message_format, ...) {
-    if (loglevel >= DEBUG) {
-        va_list args;
-
-        va_start(args, message_format);
-        error_log(0, 0, message_format, args);
+        error_log(loglvl, 0, 0, message_format, args);
         va_end(args);
     }
 }
@@ -90,6 +79,6 @@ void die(unsigned char status, int errnum, const char *message_format, ...) {
     va_list args;
 
     va_start(args, message_format);
-    error_log(status, errnum, message_format, args);
+    error_log(FATAL, status, errnum, message_format, args);
     va_end(args);
 }
