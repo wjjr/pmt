@@ -6,12 +6,13 @@
 struct file {
     FILE *fp;
     const char *name;
+    long int size;
 };
 
 struct algorithm_context {
     struct file **files;
     const char **patterns;
-    unsigned int patterns_counts;
+    unsigned int patterns_count;
     unsigned int files_count;
     unsigned char max_edit;
     unsigned char only_count;

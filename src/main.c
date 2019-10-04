@@ -141,6 +141,7 @@ int main(int argc, char *argv[]) {
             files[files_count] = malloc(sizeof(struct file));
             files[files_count]->fp = fp;
             files[files_count]->name = filename;
+            files[files_count]->size = st.st_size;
             ++files_count;
         }
     }
@@ -152,7 +153,7 @@ int main(int argc, char *argv[]) {
     context->files = files;
     context->files_count = files_count;
     context->patterns = patterns;
-    context->patterns_counts = patterns_count;
+    context->patterns_count = patterns_count;
     context->max_edit = max_edit;
     context->only_count = only_show_count;
 
