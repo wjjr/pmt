@@ -126,6 +126,9 @@ int main(int argc, char *argv[]) {
     if (max_edit > 0 && algorithm != NULL && !algorithm->approximate)
         die(EXIT_MISTAKE, 0, "%s: this algorithm does not support approximate matching", algorithm->id);
 
+    if (patterns_count > 1 && algorithm != NULL && !algorithm->parallel)
+        log_print(WARN, "%s: algorithm does not support parallel search", algorithm->id);
+
     if (patterns_count == 0) {
         patterns_count = 1;
         patterns = malloc(sizeof(void *));
