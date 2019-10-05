@@ -12,5 +12,5 @@ endif ()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
 
-add_executable(${PROJECT_NAME} src/main.c src/algorithms.h src/algorithms.c src/error.h src/error.c src/structs.h src/algorithms/aho_corasick.h src/algorithms/aho_corasick.c src/algorithms/kmp.h src/algorithms/kmp.c src/algorithms/boyer_moore.h src/algorithms/boyer_moore.c src/algorithms/sellers.h src/algorithms/sellers.c src/algorithms/ukkonen.h src/algorithms/ukkonen.c src/algorithms/shiftor.h src/algorithms/shiftor.c src/algorithms/wu_manber.h src/algorithms/wu_manber.c)
+add_executable(${PROJECT_NAME} src/main.c src/algorithms.h src/algorithms.c src/error.h src/error.c src/structs.h src/algorithms/aho_corasick.h src/algorithms/aho_corasick.c src/algorithms/boyer_moore.h src/algorithms/boyer_moore.c src/algorithms/ukkonen.h src/algorithms/ukkonen.c src/algorithms/wu_manber.h src/algorithms/wu_manber.c)
 add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
