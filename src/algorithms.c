@@ -31,5 +31,5 @@ const struct algorithm *get_algorithm(const char *algorithm_id) {
 }
 
 const struct algorithm *choose_algorithm(struct algorithm_context *algorithm_context) {
-    return get_algorithm(algorithm_context->max_edit > 0 ? "wm" : (algorithm_context->patterns_count > 1 ? "ac" : "bm"));
+    return get_algorithm(algorithm_context->max_edit > 0 ? "wm" : (algorithm_context->num_patterns > 1 ? "ac" : "bm"));
 }

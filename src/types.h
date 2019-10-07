@@ -1,0 +1,47 @@
+#ifndef _PMT_TYPES_H
+#define _PMT_TYPES_H
+
+#include <stdio.h>
+#include <stdint.h>
+
+typedef int_least8_t int_8;
+typedef int_least16_t int_16;
+typedef int_least32_t int_32;
+typedef int_least64_t int_64;
+typedef uint_least8_t uint_8;
+typedef uint_least16_t uint_16;
+typedef uint_least32_t uint_32;
+typedef uint_least64_t uint_64;
+typedef unsigned char byte;
+typedef unsigned char bool;
+
+struct file {
+    FILE *fp;
+    const char *name;
+    uint_64 size;
+};
+
+struct pattern {
+    const byte *string;
+    uint_64 length;
+};
+
+struct algorithm_context {
+    struct file *files;
+    struct pattern *patterns;
+    uint_64 num_files;
+    uint_64 num_patterns;
+    uint_8 max_edit;
+    bool only_count;
+};
+
+struct algorithm {
+    const char *id;
+    const char *name;
+    bool approximate;
+    bool parallel;
+
+    uint_8 (*search)(const struct algorithm_context *);
+};
+
+#endif /*_PMT_TYPES_H */

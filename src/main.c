@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <getopt.h>
 #include <errno.h>
 #include <sys/stat.h>
@@ -49,10 +50,10 @@ static void usage(int status) {
 int main(int argc, char *argv[]) {
     int opt;
     const struct algorithm *algorithm = NULL;
-    unsigned char only_show_count = 0, max_edit = 0;
-    const char **patterns = NULL;
-    struct file **files = NULL;
-    unsigned int patterns_count = 0, files_count = 0;
+    uint_8 only_show_count = 0, max_edit = 0;
+    struct pattern *patterns = NULL;
+    struct file *files = NULL;
+    uint_64 num_patterns = 0, num_files = 0;
     struct algorithm_context *context;
 
     log_set_progname("pmt");
@@ -69,7 +70,7 @@ int main(int argc, char *argv[]) {
             case 'e': {
                 char *endptr;
                 long optval = strtol(optarg, &endptr, 10);
-                max_edit = optval;
+                max_edit = (uint_8) optval;
 
                 if (*endptr != '\0' || optval < 0 || optval > 255 || endptr == optarg)
                     die(EXIT_MISTAKE, 0, "%s: invalid edit distance argument", optarg);
@@ -81,16 +82,16 @@ int main(int argc, char *argv[]) {
             case 'p': {
                 FILE *fp;
                 struct stat st;
-                char *buffer;
-                unsigned long size;
-                long len;
+                byte *buffer;
+                uint_64 buffer_size;
+                int_64 len;
 
                 if ((fp = fopen(optarg, "r")) == NULL || stat(optarg, &st) != 0)
                     die(EXIT_MISTAKE, errno, "%s", optarg);
                 else if (st.st_size == 0)
                     exit(EXIT_NOMATCH);
 
-                for (size = 1, buffer = malloc(1); (len = getline(&buffer, &size, fp)) > 0; size = 1, buffer = malloc(1)) { /* FIXME: getline is not portable */
+                for (buffer_size = 1, buffer = malloc(1); (len = getline((char **) &buffer, &buffer_size, fp)) > 0; buffer_size = 1, buffer = malloc(1)) { /* FIXME: getline is not portable */
                     if (buffer[len - 1] == '\n')
                         buffer[--len] = '\0';
                     if (buffer[len - 1] == '\r')
@@ -101,8 +102,9 @@ int main(int argc, char *argv[]) {
                         continue;
                     }
 
-                    patterns = realloc(patterns, ++patterns_count * sizeof(void *));
-                    patterns[patterns_count - 1] = buffer;
+                    patterns = realloc(patterns, ++num_patterns * sizeof(struct pattern));
+                    patterns[num_patterns - 1].string = buffer;
+                    patterns[num_patterns - 1].length = (uint_64) len;
                 }
 
                 free(buffer);
@@ -126,16 +128,18 @@ int main(int argc, char *argv[]) {
     if (max_edit > 0 && algorithm != NULL && !algorithm->approximate)
         die(EXIT_MISTAKE, 0, "%s: this algorithm does not support approximate matching", algorithm->id);
 
-    if (patterns_count > 1 && algorithm != NULL && !algorithm->parallel)
+    if (num_patterns > 1 && algorithm != NULL && !algorithm->parallel)
         log_print(WARN, "%s: algorithm does not support parallel search", algorithm->id);
 
-    if (patterns_count == 0) {
-        patterns_count = 1;
-        patterns = malloc(sizeof(void *));
-        patterns[0] = argv[optind++];
+    if (num_patterns == 0) {
+        num_patterns = 1;
+        patterns = malloc(sizeof(struct pattern));
+        patterns[0].string = (byte *) argv[optind];
+        patterns[0].length = strlen(argv[optind]);
+        ++optind;
     }
 
-    for (files = malloc((argc - optind) * sizeof(void *)); optind < argc; ++optind) {
+    for (files = malloc(((uint_64) (argc - optind)) * sizeof(struct file)); optind < argc; ++optind) {
         FILE *fp;
         const char *filename = argv[optind];
         struct stat st;
@@ -146,22 +150,21 @@ int main(int argc, char *argv[]) {
             fclose(fp);
             log_print(INFO, "%s: empty file, ignoring", filename);
         } else {
-            files[files_count] = malloc(sizeof(struct file));
-            files[files_count]->fp = fp;
-            files[files_count]->name = filename;
-            files[files_count]->size = st.st_size;
-            ++files_count;
+            files[num_files].fp = fp;
+            files[num_files].name = filename;
+            files[num_files].size = (uint_64) st.st_size;
+            ++num_files;
         }
     }
 
-    if (files_count == 0)
+    if (num_files == 0)
         die(EXIT_MISTAKE, 0, "no files to search");
 
     context = malloc(sizeof(struct algorithm_context));
     context->files = files;
-    context->files_count = files_count;
+    context->num_files = num_files;
     context->patterns = patterns;
-    context->patterns_count = patterns_count;
+    context->num_patterns = num_patterns;
     context->max_edit = max_edit;
     context->only_count = only_show_count;
 
@@ -169,15 +172,15 @@ int main(int argc, char *argv[]) {
         algorithm = choose_algorithm(context);
 
     if (log_get_loglevel() >= DEBUG) {
-        unsigned int i;
+        uint_64 i;
 
-        log_print(DEBUG, "algorithm=%s, only_count=%s, max_edit=%d, patterns_count=%d, files_count=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, patterns_count, files_count);
+        log_print(DEBUG, "algorithm=%s, only_count=%s, max_edit=%d, num_patterns=%d, num_files=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
 
-        for (i = 0; i < patterns_count; ++i)
+        for (i = 0; i < num_patterns; ++i)
             log_print(DEBUG, "pattern %d: |%s|", i + 1, patterns[i]);
 
-        for (i = 0; i < files_count; ++i)
-            log_print(DEBUG, "file %d: %s", i + 1, files[i]->name);
+        for (i = 0; i < num_files; ++i)
+            log_print(DEBUG, "file %d: |%s|", i + 1, files[i].name);
     }
 
     return algorithm->search(context);

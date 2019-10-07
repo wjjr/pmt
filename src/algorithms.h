@@ -1,7 +1,7 @@
 #ifndef _PMT_ALGORITHMS_H
 #define _PMT_ALGORITHMS_H
 
-#include "structs.h"
+#include "types.h"
 
 const struct algorithm *get_algorithms(void);
 
