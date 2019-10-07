@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include "algorithms.h"
-#include "error.h"
+#include "log.h"
 
 static const char optstring[] = "a:ce:hp:qv";
 static const struct option longopts[] = {
@@ -21,8 +21,7 @@ static const struct option longopts[] = {
         {NULL,        no_argument,       NULL, '\0'}
 };
 
-static void usage(int status) {
-    const char *progname = log_get_progname();
+static void usage(int status, const char *progname) {
     const struct algorithm *algorithms, *algorithm;
     int i;
 
@@ -48,6 +47,7 @@ static void usage(int status) {
 }
 
 int main(int argc, char *argv[]) {
+    const char *progname = "pmt";
     int opt;
     const struct algorithm *algorithm = NULL;
     uint_8 only_show_count = 0, max_edit = 0;
@@ -55,8 +55,6 @@ int main(int argc, char *argv[]) {
     struct file *files = NULL;
     uint_64 num_patterns = 0, num_files = 0;
     struct algorithm_context *context;
-
-    log_set_progname("pmt");
 
     while ((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
         switch (opt) {
@@ -77,7 +75,7 @@ int main(int argc, char *argv[]) {
             }
                 break;
             case 'h':
-                usage(EXIT_SUCCESS);
+                usage(EXIT_SUCCESS, progname);
                 break;
             case 'p': {
                 FILE *fp;
@@ -118,12 +116,12 @@ int main(int argc, char *argv[]) {
                 log_increase_level();
                 break;
             default:
-                usage(EXIT_MISTAKE);
+                usage(EXIT_MISTAKE, progname);
         }
     }
 
     if (optind >= argc)
-        usage(EXIT_MISTAKE);
+        usage(EXIT_MISTAKE, progname);
 
     if (max_edit > 0 && algorithm != NULL && !algorithm->approximate)
         die(EXIT_MISTAKE, 0, "%s: this algorithm does not support approximate matching", algorithm->id);
@@ -171,17 +169,19 @@ int main(int argc, char *argv[]) {
     if (algorithm == NULL)
         algorithm = choose_algorithm(context);
 
-    if (log_get_loglevel() >= DEBUG) {
+#ifdef __DEBUG
+    if (log_get_level() >= DEBUG) {
         uint_64 i;
 
         log_print(DEBUG, "algorithm=%s, only_count=%s, max_edit=%d, num_patterns=%d, num_files=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
 
         for (i = 0; i < num_patterns; ++i)
-            log_print(DEBUG, "pattern %d: |%s|", i + 1, patterns[i]);
+            log_print(DEBUG, "pattern %d: |%s|", i + 1, patterns[i].string);
 
         for (i = 0; i < num_files; ++i)
             log_print(DEBUG, "file %d: |%s|", i + 1, files[i].name);
     }
+#endif /* DEBUG */
 
     return algorithm->search(context);
 }

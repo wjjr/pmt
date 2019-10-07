@@ -1,16 +1,15 @@
 
-#include "error.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdarg.h>
 
-static const char *error_log_progname;
-static enum loglevel loglevel = WARN;
+static enum log_level log_level = WARN;
 
-static __inline__ char error_prefix(enum loglevel loglvl) {
-    switch (loglvl) {
+static __inline__ char error_prefix(enum log_level log_lvl) {
+    switch (log_lvl) {
         case FATAL:
             return 'F';
         case SILENT:
@@ -28,8 +27,8 @@ static __inline__ char error_prefix(enum loglevel loglvl) {
     }
 }
 
-static void error_log(enum loglevel loglvl, unsigned char status, int errnum, const char *message_format, va_list args) {
-    fprintf(stderr, "%c: %s: ", error_prefix(loglvl), error_log_progname);
+static void error_log(enum log_level log_lvl, unsigned char status, int errnum, const char *message_format, va_list args) {
+    fprintf(stderr, "%c: ", error_prefix(log_lvl));
 
     vfprintf(stderr, message_format, args);
 
@@ -44,33 +43,25 @@ static void error_log(enum loglevel loglvl, unsigned char status, int errnum, co
         exit(status);
 }
 
-void log_set_progname(const char *progname) {
-    error_log_progname = progname;
+void log_increase_level(void) {
+    if (log_level != SILENT)
+        ++log_level;
 }
 
-const char *log_get_progname(void) {
-    return error_log_progname;
+void log_silence(void) {
+    log_level = SILENT;
 }
 
-void log_increase_level() {
-    if (loglevel != SILENT)
-        ++loglevel;
+enum log_level log_get_level(void) {
+    return log_level;
 }
 
-void log_silence() {
-    loglevel = SILENT;
-}
-
-enum loglevel log_get_loglevel() {
-    return loglevel;
-}
-
-void log_print(enum loglevel loglvl, const char *message_format, ...) {
-    if (loglvl <= loglevel) {
+void log_print(enum log_level log_lvl, const char *message_format, ...) {
+    if (log_lvl <= log_level) {
         va_list args;
 
         va_start(args, message_format);
-        error_log(loglvl, 0, 0, message_format, args);
+        error_log(log_lvl, 0, 0, message_format, args);
         va_end(args);
     }
 }
