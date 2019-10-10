@@ -3,6 +3,6 @@
 
 #include "../types.h"
 
-uint_8 ukkonen_search(const struct algorithm_context *);
+uint_8 ukkonen_search(const struct search_context *);
 
 #endif /* _PMT_UKKONEN_H */

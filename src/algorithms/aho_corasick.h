@@ -3,6 +3,6 @@
 
 #include "../types.h"
 
-uint_8 aho_corasick_search(const struct algorithm_context *);
+uint_8 aho_corasick_search(const struct search_context *);
 
 #endif /* _PMT_AHO_CORASICK_H */

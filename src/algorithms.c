@@ -19,7 +19,7 @@ const struct algorithm *get_algorithms(void) {
     return algorithms;
 }
 
-const struct algorithm *get_algorithm(const char *algorithm_id) {
+const struct algorithm *get_algorithm(const char *const algorithm_id) {
     int i = 0;
     const struct algorithm *algorithm;
 
@@ -30,6 +30,6 @@ const struct algorithm *get_algorithm(const char *algorithm_id) {
     return NULL;
 }
 
-const struct algorithm *choose_algorithm(struct algorithm_context *algorithm_context) {
-    return get_algorithm(algorithm_context->max_edit > 0 ? "wm" : (algorithm_context->num_patterns > 1 ? "ac" : "bm"));
+const struct algorithm *choose_algorithm(const struct search_context *const ctx) {
+    return get_algorithm(ctx->max_edit > 0 ? "wm" : (ctx->num_patterns > 1 ? "ac" : "bm"));
 }

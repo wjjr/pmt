@@ -21,7 +21,7 @@ static const struct option longopts[] = {
         {NULL,        no_argument,       NULL, '\0'}
 };
 
-static void usage(int status, const char *progname) {
+static void usage(const int status, const char *const progname) {
     const struct algorithm *algorithms, *algorithm;
     int i;
 
@@ -53,8 +53,8 @@ int main(int argc, char *argv[]) {
     uint_8 only_show_count = 0, max_edit = 0;
     struct pattern *patterns = NULL;
     struct file *files = NULL;
-    uint_64 num_patterns = 0, num_files = 0;
-    struct algorithm_context *context;
+    uint_64 num_patterns = 0, num_files = 0, i;
+    struct search_context *context;
 
     while ((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
         switch (opt) {
@@ -84,7 +84,7 @@ int main(int argc, char *argv[]) {
                 uint_64 buffer_size;
                 int_64 len;
 
-                if ((fp = fopen(optarg, "r")) == NULL || stat(optarg, &st) != 0)
+                if ((fp = fopen(optarg, "r+b")) == NULL || stat(optarg, &st) != 0)
                     die(EXIT_MISTAKE, errno, "%s", optarg);
                 else if (st.st_size == 0)
                     exit(EXIT_NOMATCH);
@@ -142,7 +142,7 @@ int main(int argc, char *argv[]) {
         const char *filename = argv[optind];
         struct stat st;
 
-        if ((fp = fopen(filename, "r+")) == NULL || stat(filename, &st) != 0)
+        if ((fp = fopen(filename, "r+b")) == NULL || stat(filename, &st) != 0)
             die(EXIT_MISTAKE, errno, "%s", filename);
         else if (st.st_size == 0) {
             fclose(fp);
@@ -158,7 +158,7 @@ int main(int argc, char *argv[]) {
     if (num_files == 0)
         die(EXIT_MISTAKE, 0, "no files to search");
 
-    context = malloc(sizeof(struct algorithm_context));
+    context = malloc(sizeof(struct search_context));
     context->files = files;
     context->num_files = num_files;
     context->patterns = patterns;
@@ -169,19 +169,9 @@ int main(int argc, char *argv[]) {
     if (algorithm == NULL)
         algorithm = choose_algorithm(context);
 
-#ifdef __DEBUG
-    if (log_get_level() >= DEBUG) {
-        uint_64 i;
-
-        log_print(DEBUG, "algorithm=%s, only_count=%s, max_edit=%d, num_patterns=%d, num_files=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
-
-        for (i = 0; i < num_patterns; ++i)
-            log_print(DEBUG, "pattern %d: |%s|", i + 1, patterns[i].string);
-
-        for (i = 0; i < num_files; ++i)
-            log_print(DEBUG, "file %d: |%s|", i + 1, files[i].name);
-    }
-#endif /* DEBUG */
+    log_debug("algorithm=%s, only_count=%s, max_edit=%d, num_patterns=%d, num_files=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
+    for (i = 0; i < num_patterns; ++i) log_debug("pattern %d: |%s|", i + 1, patterns[i].string);
+    for (i = 0; i < num_files; ++i) log_debug("file %d: |%s|", i + 1, files[i].name);
 
     return algorithm->search(context);
 }

@@ -26,9 +26,9 @@ struct pattern {
     uint_64 length;
 };
 
-struct algorithm_context {
-    struct file *files;
-    struct pattern *patterns;
+struct search_context {
+    const struct file *files;
+    const struct pattern *patterns;
     uint_64 num_files;
     uint_64 num_patterns;
     uint_8 max_edit;
@@ -36,12 +36,12 @@ struct algorithm_context {
 };
 
 struct algorithm {
-    const char *id;
-    const char *name;
-    bool approximate;
-    bool parallel;
+    const char *const id;
+    const char *const name;
+    const bool approximate;
+    const bool parallel;
 
-    uint_8 (*search)(const struct algorithm_context *);
+    uint_8 (*const search)(const struct search_context *);
 };
 
 #endif /*_PMT_TYPES_H */

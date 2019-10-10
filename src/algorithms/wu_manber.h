@@ -3,6 +3,6 @@
 
 #include "../types.h"
 
-uint_8 wu_manber_search(const struct algorithm_context *);
+uint_8 wu_manber_search(const struct search_context *);
 
 #endif /* _PMT_WU_MANBER_H */

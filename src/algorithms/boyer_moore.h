@@ -3,6 +3,6 @@
 
 #include "../types.h"
 
-uint_8 boyer_moore_search(const struct algorithm_context *);
+uint_8 boyer_moore_search(const struct search_context *);
 
 #endif /* _PMT_BOYER_MOORE_H */

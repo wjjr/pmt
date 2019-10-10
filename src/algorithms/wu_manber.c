@@ -3,7 +3,7 @@
 
 #include "../log.h"
 
-uint_8 wu_manber_search(const struct algorithm_context *algorithm_context) {
-    die(EXIT_MISTAKE, 0, "wm: not implemented", algorithm_context->num_files);
+uint_8 wu_manber_search(const struct search_context *ctx) {
+    die(EXIT_MISTAKE, 0, "wm: not implemented", ctx->num_files);
     return 255;
 }
