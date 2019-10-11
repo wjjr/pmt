@@ -42,7 +42,7 @@ static void error_log(const enum log_level log_lvl, const unsigned char status, 
     if (status)
         exit(status);
     else if (log_lvl == FATAL)
-        exit(EXIT_MISTAKE);
+        exit(EXIT_FAILURE);
 }
 
 void log_increase_level(void) {
@@ -52,10 +52,6 @@ void log_increase_level(void) {
 
 void log_silence(void) {
     log_level = SILENT;
-}
-
-enum log_level log_get_level(void) {
-    return log_level;
 }
 
 void log_print(const enum log_level log_lvl, const char *const message_format, ...) {
@@ -68,16 +64,6 @@ void log_print(const enum log_level log_lvl, const char *const message_format, .
     }
 }
 
-void log_debug(const char *const message_format, ...) {
-#ifdef __DEBUG
-    va_list args;
-
-    va_start(args, message_format);
-    error_log(DEBUG, 0, 0, message_format, args);
-    va_end(args);
-#endif
-}
-
 void die(const unsigned char status, const int errnum, const char *const message_format, ...) {
     va_list args;
 
@@ -85,3 +71,15 @@ void die(const unsigned char status, const int errnum, const char *const message
     error_log(FATAL, status, errnum, message_format, args);
     va_end(args);
 }
+
+#ifdef __PMT_DEBUG
+void log_debug(const char *const message_format, ...) {
+    if (DEBUG <= log_level) {
+        va_list args;
+
+        va_start(args, message_format);
+        error_log(DEBUG, 0, 0, message_format, args);
+        va_end(args);
+    }
+}
+#endif

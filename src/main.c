@@ -9,16 +9,18 @@
 #include "algorithms.h"
 #include "log.h"
 
-static const char optstring[] = "a:ce:hp:qv";
+static const char optstring[] = "a:bce:hop:qv";
 static const struct option longopts[] = {
-        {"algorithm", required_argument, NULL, 'a'},
-        {"count",     no_argument,       NULL, 'c'},
-        {"edit",      required_argument, NULL, 'e'},
-        {"help",      no_argument,       NULL, 'h'},
-        {"pattern",   required_argument, NULL, 'p'},
-        {"quiet",     no_argument,       NULL, 'q'},
-        {"verbose",   no_argument,       NULL, 'v'},
-        {NULL,        no_argument,       NULL, '\0'}
+        {"algorithm",     required_argument, NULL, 'a'},
+        {"byte-offset",   no_argument,       NULL, 'b'},
+        {"count",         no_argument,       NULL, 'c'},
+        {"edit",          required_argument, NULL, 'e'},
+        {"help",          no_argument,       NULL, 'h'},
+        {"only-matching", no_argument,       NULL, 'o'},
+        {"pattern",       required_argument, NULL, 'p'},
+        {"quiet",         no_argument,       NULL, 'q'},
+        {"verbose",       no_argument,       NULL, 'v'},
+        {NULL,            no_argument,       NULL, '\0'}
 };
 
 static void usage(const int status, const char *const progname) {
@@ -32,12 +34,15 @@ static void usage(const int status, const char *const progname) {
         exit(status);
     }
 
-    printf("Search for PATTERN in each FILE.\n\n");
-    printf("-a, --algorithm=NAME  Selects the algorithm used in the search\n");
-    printf("-c, --count           Print only a total count of matches\n");
-    printf("-e, --edit=NUM        Find patterns with a maximum edit distance of NUM operations\n");
-    printf("-h, --help            Display this help text and exit\n");
-    printf("-p, --pattern=FILE    Obtain patterns from FILE, one per line\n");
+    printf("Search for PATTERN in each FILE.\n");
+    printf("Example: %s 'Romeo' shakespeare.txt\n\n", progname);
+    printf("  -a, --algorithm=NAME  selects the algorithm used in the search\n");
+    printf("  -b, --byte-offset     print byte offset of the first character of each output line\n");
+    printf("  -c, --count           print only a total count of matches\n");
+    printf("  -e, --edit=NUM        find patterns with a maximum edit distance of NUM operations\n");
+    printf("  -h, --help            display this help text and exit\n");
+    printf("  -o, --only-matching   print only the matching parts\n");
+    printf("  -p, --pattern=FILE    obtain patterns from FILE, one per line\n");
 
     printf("\nSupported algorithms:\n");
     for (i = 0, algorithms = get_algorithms(); (algorithm = &algorithms[i])->id != NULL; ++i)
@@ -50,7 +55,8 @@ int main(int argc, char *argv[]) {
     const char *progname = "pmt";
     int opt;
     const struct algorithm *algorithm = NULL;
-    uint_8 only_show_count = 0, max_edit = 0;
+    bool print_byte_offset = 0, only_show_count = 0, only_matching = 0;
+    uint_8 max_edit = 0;
     struct pattern *patterns = NULL;
     struct file *files = NULL;
     uint_64 num_patterns = 0, num_files = 0, i;
@@ -61,6 +67,9 @@ int main(int argc, char *argv[]) {
             case 'a':
                 if ((algorithm = get_algorithm(optarg)) == NULL)
                     die(EXIT_MISTAKE, 0, "%s: unknown algorithm", optarg);
+                break;
+            case 'b':
+                print_byte_offset = 1;
                 break;
             case 'c':
                 only_show_count = 1;
@@ -77,15 +86,18 @@ int main(int argc, char *argv[]) {
             case 'h':
                 usage(EXIT_SUCCESS, progname);
                 break;
+            case 'o':
+                only_matching = 1;
+                break;
             case 'p': {
                 FILE *fp;
                 struct stat st;
                 byte *buffer;
-                uint_64 buffer_size;
+                usize buffer_size;
                 int_64 len;
 
                 if ((fp = fopen(optarg, "r+b")) == NULL || stat(optarg, &st) != 0)
-                    die(EXIT_MISTAKE, errno, "%s", optarg);
+                    die(EXIT_FAILURE, errno, "%s", optarg);
                 else if (st.st_size == 0)
                     exit(EXIT_NOMATCH);
 
@@ -120,11 +132,11 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (optind >= argc)
+    if (optind >= argc) /* The user has not specified any files */
         usage(EXIT_MISTAKE, progname);
 
     if (max_edit > 0 && algorithm != NULL && !algorithm->approximate)
-        die(EXIT_MISTAKE, 0, "%s: this algorithm does not support approximate matching", algorithm->id);
+        die(EXIT_MISTAKE, 0, "%s: algorithm does not support approximate matching", algorithm->id);
 
     if (num_patterns > 1 && algorithm != NULL && !algorithm->parallel)
         log_print(WARN, "%s: algorithm does not support parallel search", algorithm->id);
@@ -143,7 +155,7 @@ int main(int argc, char *argv[]) {
         struct stat st;
 
         if ((fp = fopen(filename, "r+b")) == NULL || stat(filename, &st) != 0)
-            die(EXIT_MISTAKE, errno, "%s", filename);
+            die(EXIT_FAILURE, errno, "%s", filename);
         else if (st.st_size == 0) {
             fclose(fp);
             log_print(INFO, "%s: empty file, ignoring", filename);
@@ -165,13 +177,15 @@ int main(int argc, char *argv[]) {
     context->num_patterns = num_patterns;
     context->max_edit = max_edit;
     context->only_count = only_show_count;
+    context->only_matching = only_matching;
+    context->print_byte_offset = print_byte_offset;
 
     if (algorithm == NULL)
         algorithm = choose_algorithm(context);
 
-    log_debug("algorithm=%s, only_count=%s, max_edit=%d, num_patterns=%d, num_files=%d", algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
-    for (i = 0; i < num_patterns; ++i) log_debug("pattern %d: |%s|", i + 1, patterns[i].string);
-    for (i = 0; i < num_files; ++i) log_debug("file %d: |%s|", i + 1, files[i].name);
+    log_debug("algorithm=%s, only_count=%s, max_edit=%" PRIu8 ", num_patterns=%" PRIu64 ", num_files=%" PRIu64, algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
+    for (i = 0; i < num_patterns; ++i) log_debug("pattern %" PRIu64 ": |%s|", i + 1, patterns[i].string);
+    for (i = 0; i < num_files; ++i) log_debug("file %" PRIu64 ": |%s|", i + 1, files[i].name);
 
     return algorithm->search(context);
 }

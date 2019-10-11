@@ -8,8 +8,8 @@ OUT_DIR=bin
 EXTRAS=doc/ LICENSE Makefile README.txt
 DIST_TGZ=$(TARGET)-dist.tgz
 
-OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/**/*.c))
-HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/**/*.h)
+OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c $(SRC_DIR)/*/*/*.c))
+HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h $(SRC_DIR)/*/*/*.h)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@mkdir -p $(dir $@)

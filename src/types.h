@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stddef.h>
+#include <inttypes.h>
 
 typedef int_least8_t int_8;
 typedef int_least16_t int_16;
@@ -12,6 +14,8 @@ typedef uint_least8_t uint_8;
 typedef uint_least16_t uint_16;
 typedef uint_least32_t uint_32;
 typedef uint_least64_t uint_64;
+typedef size_t usize;
+typedef ptrdiff_t ssize;
 typedef unsigned char byte;
 typedef unsigned char bool;
 
@@ -33,6 +37,8 @@ struct search_context {
     uint_64 num_patterns;
     uint_8 max_edit;
     bool only_count;
+    bool only_matching;
+    bool print_byte_offset;
 };
 
 struct algorithm {
