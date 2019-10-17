@@ -1,4 +1,4 @@
-
+/* pmt: Copyright (c) 2019 Wendell Júnior - This code is licensed under MIT license (see LICENSE for details) */
 #include "algorithms.h"
 
 #include <string.h>

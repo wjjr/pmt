@@ -1,3 +1,4 @@
+/* pmt: Copyright (c) 2019 Wendell Júnior - This code is licensed under MIT license (see LICENSE for details) */
 #ifndef _PMT_AHO_CORASICK_H
 #define _PMT_AHO_CORASICK_H
 

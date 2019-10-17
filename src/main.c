@@ -1,3 +1,4 @@
+/* pmt: Copyright (c) 2019 Wendell Júnior - This code is licensed under MIT license (see LICENSE for details) */
 #define _POSIX_C_SOURCE 200809L
 
 #include <stdio.h>
