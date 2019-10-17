@@ -1,7 +1,7 @@
 TARGET=pmt
 CC=gcc
-CFLAGS=-std=c99 -Wall -Wextra -pedantic-errors -O2 -s
-LDFLAGS=-Wl,-gc-sections
+CFLAGS=-std=c99 -Wall -Wextra -pedantic-errors -O2
+LDFLAGS=-Wl,-gc-sections -s
 SRC_DIR=src
 OBJ_DIR=obj
 OUT_DIR=bin
