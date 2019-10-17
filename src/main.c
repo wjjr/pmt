@@ -55,11 +55,11 @@ int main(int argc, char *argv[]) {
     const char *progname = "pmt";
     int opt;
     const struct algorithm *algorithm = NULL;
-    bool print_byte_offset = 0, only_show_count = 0, only_matching = 0;
-    uint_8 max_edit = 0;
+    bool print_byte_offset = false, only_show_count = false, only_matching = false;
+    uint_8 edit_distance = 0;
     struct pattern *patterns = NULL;
     struct file *files = NULL;
-    uint_64 num_patterns = 0, num_files = 0, i;
+    usize num_patterns = 0, num_files = 0, i;
     struct search_context *context;
 
     while ((opt = getopt_long(argc, argv, optstring, longopts, NULL)) != -1) {
@@ -69,15 +69,15 @@ int main(int argc, char *argv[]) {
                     die(EXIT_MISTAKE, 0, "%s: unknown algorithm", optarg);
                 break;
             case 'b':
-                print_byte_offset = 1;
+                print_byte_offset = true;
                 break;
             case 'c':
-                only_show_count = 1;
+                only_show_count = true;
                 break;
             case 'e': {
                 char *endptr;
                 long optval = strtol(optarg, &endptr, 10);
-                max_edit = (uint_8) optval;
+                edit_distance = (uint_8) optval;
 
                 if (*endptr != '\0' || optval < 0 || optval > 255 || endptr == optarg)
                     die(EXIT_MISTAKE, 0, "%s: invalid edit distance argument", optarg);
@@ -87,14 +87,14 @@ int main(int argc, char *argv[]) {
                 usage(EXIT_SUCCESS, progname);
                 break;
             case 'o':
-                only_matching = 1;
+                only_matching = true;
                 break;
             case 'p': {
                 FILE *fp;
                 struct stat st;
                 byte *buffer;
                 usize buffer_size;
-                int_64 len;
+                ssize len;
 
                 if ((fp = fopen(optarg, "r+b")) == NULL || stat(optarg, &st) != 0)
                     die(EXIT_FAILURE, errno, "%s", optarg);
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
 
                     patterns = realloc(patterns, ++num_patterns * sizeof(struct pattern));
                     patterns[num_patterns - 1].string = buffer;
-                    patterns[num_patterns - 1].length = (uint_64) len;
+                    patterns[num_patterns - 1].length = (usize) len;
                 }
 
                 free(buffer);
@@ -132,10 +132,10 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (optind >= argc) /* The user has not specified any files */
+    if (optind >= argc) /* user has not specified any files */
         usage(EXIT_MISTAKE, progname);
 
-    if (max_edit > 0 && algorithm != NULL && !algorithm->approximate)
+    if (edit_distance > 0 && algorithm != NULL && !algorithm->approximate)
         die(EXIT_MISTAKE, 0, "%s: algorithm does not support approximate matching", algorithm->id);
 
     if (num_patterns > 1 && algorithm != NULL && !algorithm->parallel)
@@ -149,7 +149,7 @@ int main(int argc, char *argv[]) {
         ++optind;
     }
 
-    for (files = malloc(((uint_64) (argc - optind)) * sizeof(struct file)); optind < argc; ++optind) {
+    for (files = malloc(((usize) (argc - optind)) * sizeof(struct file)); optind < argc; ++optind) {
         FILE *fp;
         const char *filename = argv[optind];
         struct stat st;
@@ -162,7 +162,7 @@ int main(int argc, char *argv[]) {
         } else {
             files[num_files].fp = fp;
             files[num_files].name = filename;
-            files[num_files].size = (uint_64) st.st_size;
+            files[num_files].size = (usize) st.st_size;
             ++num_files;
         }
     }
@@ -175,7 +175,7 @@ int main(int argc, char *argv[]) {
     context->num_files = num_files;
     context->patterns = patterns;
     context->num_patterns = num_patterns;
-    context->max_edit = max_edit;
+    context->edit_distance = edit_distance;
     context->only_count = only_show_count;
     context->only_matching = only_matching;
     context->print_byte_offset = print_byte_offset;
@@ -183,9 +183,10 @@ int main(int argc, char *argv[]) {
     if (algorithm == NULL)
         algorithm = choose_algorithm(context);
 
-    log_debug("algorithm=%s, only_count=%s, max_edit=%" PRIu8 ", num_patterns=%" PRIu64 ", num_files=%" PRIu64, algorithm->id, only_show_count ? "true" : "false", max_edit, num_patterns, num_files);
-    for (i = 0; i < num_patterns; ++i) log_debug("pattern %" PRIu64 ": |%s|", i + 1, patterns[i].string);
-    for (i = 0; i < num_files; ++i) log_debug("file %" PRIu64 ": |%s|", i + 1, files[i].name);
+    log_debug(DEBUG, "algorithm=%s, only_count=%s, only_matching=%s, print_byte_offset=%s, edit_distance=%" PRIu8 ", num_patterns=%" PRIuSIZ ", num_files=%" PRIuSIZ,
+              algorithm->id, only_show_count ? "true" : "false", only_matching ? "true" : "false", print_byte_offset ? "true" : "false", edit_distance, num_patterns, num_files);
+    for (i = 0; i < num_patterns; ++i) log_debug(DEBUG, "pattern %" PRIuSIZ ": |%s| (length: %" PRIuSIZ " bytes)", i + 1, patterns[i].string, patterns[i].length);
+    for (i = 0; i < num_files; ++i) log_debug(DEBUG, "filename %" PRIuSIZ ": |%s| (size: %" PRIuSIZ " bytes)", i + 1, files[i].name, files[i].size);
 
     return algorithm->search(context);
 }

@@ -12,7 +12,7 @@ static const struct algorithm algorithms[] = {
         {"bm",  "Boyer-Moore (1977)",                  0, 0, &boyer_moore_search},
         {"uk",  "Ukkonen (1985)",                      1, 0, &ukkonen_search},
         {"wm",  "Wu-Manber (1992)",                    1, 0, &wu_manber_search},
-        {NULL,  0,                                     0, 0, NULL}
+        {NULL,  NULL,                                  0, 0, NULL}
 };
 
 const struct algorithm *get_algorithms(void) {
@@ -31,5 +31,5 @@ const struct algorithm *get_algorithm(const char *const algorithm_id) {
 }
 
 const struct algorithm *choose_algorithm(const struct search_context *const ctx) {
-    return get_algorithm(ctx->max_edit > 0 ? "wm" : (ctx->num_patterns > 1 ? "ac" : "bm"));
+    return get_algorithm(ctx->edit_distance > 0 ? "wm" : (ctx->num_patterns > 1 ? "ac" : "bm"));
 }

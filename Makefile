@@ -5,11 +5,16 @@ LDFLAGS=-Wl,-gc-sections
 SRC_DIR=src
 OBJ_DIR=obj
 OUT_DIR=bin
-EXTRAS=doc/ LICENSE Makefile README.txt
+EXTRAS=doc/ LICENSE Makefile README.md
 DIST_TGZ=$(TARGET)-dist.tgz
 
 OBJECTS=$(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(wildcard $(SRC_DIR)/*.c $(SRC_DIR)/*/*.c $(SRC_DIR)/*/*/*.c))
 HEADERS=$(wildcard $(SRC_DIR)/*.h $(SRC_DIR)/*/*.h $(SRC_DIR)/*/*/*.h)
+
+.PRECIOUS: $(TARGET) $(OBJECTS)
+.PHONY: default all clean
+default: $(TARGET)
+all: default
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(HEADERS)
 	@mkdir -p $(dir $@)
@@ -19,10 +24,6 @@ $(TARGET): $(OBJECTS)
 	@mkdir -p $(OUT_DIR)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJECTS) -o $(OUT_DIR)/$@
 
-.PRECIOUS: $(TARGET) $(OBJECTS)
-.PHONY: default all clean
-default: $(TARGET)
-all: default
 clean:
 	@rm -rf $(OBJ_DIR) $(OUT_DIR) $(DIST_TGZ)
 dist:

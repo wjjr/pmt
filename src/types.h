@@ -2,9 +2,23 @@
 #define _PMT_TYPES_H
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stddef.h>
 #include <inttypes.h>
+#include <limits.h>
+
+#define PRIdSIZ PRIdPTR
+#define PRIuSIZ PRIuPTR
+#define USIZE_MAX SIZE_MAX
+#define BYTE_MAX UCHAR_MAX
+
+#if USIZE_MAX > UINT32_MAX
+#define USIZE_C(c) UINT64_C(c)
+#else
+#define USIZE_C(c) UINT32_C(c)
+#endif
+
+#define false 0
+#define true 1
 
 typedef int_least8_t int_8;
 typedef int_least16_t int_16;
@@ -16,26 +30,26 @@ typedef uint_least32_t uint_32;
 typedef uint_least64_t uint_64;
 typedef size_t usize;
 typedef ptrdiff_t ssize;
-typedef unsigned char byte;
-typedef unsigned char bool;
+typedef uint_8 byte;
+typedef uint_8 bool;
 
 struct file {
     FILE *fp;
     const char *name;
-    uint_64 size;
+    usize size;
 };
 
 struct pattern {
     const byte *string;
-    uint_64 length;
+    usize length;
 };
 
 struct search_context {
     const struct file *files;
     const struct pattern *patterns;
-    uint_64 num_files;
-    uint_64 num_patterns;
-    uint_8 max_edit;
+    usize num_files;
+    usize num_patterns;
+    uint_8 edit_distance;
     bool only_count;
     bool only_matching;
     bool print_byte_offset;

@@ -6,6 +6,13 @@
 #define EXIT_NOMATCH 1
 #define EXIT_MISTAKE 2
 #define EXIT_FAILURE 3
+#define NOERR 0
+
+#ifndef __MINGW32__
+#define _PRINTF_FORMAT(f, f_params) __attribute__((format(printf, f, f_params)))
+#else
+#define _PRINTF_FORMAT(f, f_params) __attribute__((format(gnu_printf, f, f_params)))
+#endif
 
 enum log_level {
     FATAL,
@@ -13,21 +20,22 @@ enum log_level {
     ERROR,
     WARN,
     INFO,
-    DEBUG
+    DEBUG,
+    NOISY
 };
 
 void log_increase_level(void);
 
 void log_silence(void);
 
-void log_print(enum log_level, const char *message_format, ...);
+void _PRINTF_FORMAT(2, 3) log_print(enum log_level, const char *message_format, ...);
 
-void die(unsigned char status, int err_num, const char *message_format, ...);
+void _PRINTF_FORMAT(3, 4) die(unsigned char status, int err_num, const char *message_format, ...);
 
 #ifndef __PMT_DEBUG
-static __inline__ void log_debug(const char *message_format __attribute__ ((__unused__)), ...) {}
+static __inline void _PRINTF_FORMAT(2, 3) log_debug(enum log_level log_level __attribute__((unused)), const char *message_format __attribute__((unused)), ...) {}
 #else
-void log_debug(const char *message_format, ...);
+void _PRINTF_FORMAT(2, 3) log_debug(enum log_level, const char *message_format, ...);
 #endif
 
 #endif /*_PMT_LOG_H*/

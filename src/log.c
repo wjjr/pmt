@@ -8,12 +8,9 @@
 
 static enum log_level log_level = WARN;
 
-static __inline__ char error_prefix(const enum log_level log_lvl) {
+static __inline char error_prefix(const enum log_level log_lvl) {
     switch (log_lvl) {
         case FATAL:
-            return 'F';
-        case SILENT:
-            return 'S';
         case ERROR:
             return 'E';
         case WARN:
@@ -32,10 +29,8 @@ static void error_log(const enum log_level log_lvl, const unsigned char status, 
 
     vfprintf(stderr, message_format, args);
 
-    if (errnum) {
-        const char *error_string = strerror(errnum);
-        fprintf(stderr, ": %s", error_string ? error_string : "Unknown system error");
-    }
+    if (errnum)
+        fprintf(stderr, ": %s", strerror(errnum));
 
     putc('\n', stderr);
 
@@ -73,8 +68,8 @@ void die(const unsigned char status, const int errnum, const char *const message
 }
 
 #ifdef __PMT_DEBUG
-void log_debug(const char *const message_format, ...) {
-    if (DEBUG <= log_level) {
+void log_debug(enum log_level log_lvl, const char *const message_format, ...) {
+    if (log_lvl <= log_level) {
         va_list args;
 
         va_start(args, message_format);
