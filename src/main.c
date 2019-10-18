@@ -4,11 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <getopt.h>
 #include <errno.h>
-#include <sys/stat.h>
 #include "algorithms.h"
 #include "log.h"
+
+#ifndef WIN32
+#include <getopt.h>
+#include <sys/stat.h>
+#else
+#include "win/getopt.h"
+#endif
 
 static const char optstring[] = "a:bce:hop:qv";
 static const struct option longopts[] = {
@@ -90,6 +95,7 @@ int main(int argc, char *argv[]) {
                 only_matching = true;
                 break;
             case 'p': {
+#ifndef WIN32
                 FILE *fp;
                 struct stat st;
                 byte *buffer;
@@ -119,6 +125,7 @@ int main(int argc, char *argv[]) {
 
                 free(buffer);
                 fclose(fp);
+#endif
             }
                 break;
             case 'q':

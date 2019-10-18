@@ -4,8 +4,13 @@
 
 #include <stdio.h>
 #include <stddef.h>
-#include <inttypes.h>
 #include <limits.h>
+
+#ifndef WIN32
+#include <inttypes.h>
+#else
+#include "win/c90_types.h"
+#endif
 
 #define PRIdSIZ PRIdPTR
 #define PRIuSIZ PRIuPTR

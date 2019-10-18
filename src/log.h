@@ -10,6 +10,9 @@
 #define NOERR 0
 
 #ifndef __MINGW32__
+#ifdef WIN32
+#define __attribute__(_)
+#endif
 #define _PRINTF_FORMAT(f, f_params) __attribute__((format(printf, f, f_params)))
 #else
 #define _PRINTF_FORMAT(f, f_params) __attribute__((format(gnu_printf, f, f_params)))
