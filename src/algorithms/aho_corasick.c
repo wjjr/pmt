@@ -77,8 +77,9 @@ static const struct state *build_sm(const struct pattern *const patterns, const 
 }
 
 static usize run_aho_corasick(const struct state *const sm, const struct file *const file, const struct search_context *const ctx) {
-    usize i, j, buffer_read_size, total_read = 0, total_matches = 0, max_pattern_length, line_byte_offset = 0, *last_line_byte_offset = NULL;
+    usize i, j, buffer_read_size, total_read = 0, total_matches = 0, max_pattern_length;
     byte *buffer = malloc(BUFFER_SIZE);
+    struct line last_line = {-1, -1};
     const struct state *s, *t, *u = NULL;
     const struct pattern *pattern = NULL;
     usize pattern_offset = 0;
@@ -113,11 +114,8 @@ static usize run_aho_corasick(const struct state *const sm, const struct file *c
                 pattern_offset = total_read + i + 1;
 
                 if (!ctx->only_count && !ctx->only_matching)
-                    print_file_line(file, total_read + i, line_byte_offset, &last_line_byte_offset, ctx->print_byte_offset);
+                    print_file_line(file, total_read + i, buffer, BUFFER_SIZE, buffer_read_size, i, ctx->print_byte_offset, &last_line);
             }
-
-            if (buffer[i] == LF)
-                line_byte_offset = total_read + i;
         }
 
     log_debug(DEBUG, "%" PRIuSIZ " bytes read from '%s'", total_read, file->name);

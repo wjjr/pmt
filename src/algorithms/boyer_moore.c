@@ -28,9 +28,9 @@ static void build_delta(const struct pattern *pattern) {
 }
 
 static usize run_boyer_moore(const struct file *const file, const struct pattern *const pattern, const struct search_context *const ctx) {
-    usize i, j, k, buffer_read_size, total_read = 0, total_matches = 0, line_byte_offset = 0, *last_line_byte_offset = NULL,
-            buffer_size = pattern->length < BUFFER_SIZE ? BUFFER_SIZE : ((pattern->length + 4194303) & -(USIZE_C(4194304)));
+    usize i, j, k, buffer_read_size, total_read = 0, total_matches = 0, buffer_size = pattern->length < BUFFER_SIZE ? BUFFER_SIZE : ((pattern->length + 4194303) & -(USIZE_C(4194304)));
     byte *buffer = malloc(buffer_size * 2), *back_buffer = &buffer[buffer_size], *swp_buffer;
+    struct line last_line = {-1, -1};
     const usize large = BUFFER_SIZE + pattern->length;
     bool found = false;
 
@@ -58,14 +58,11 @@ static usize run_boyer_moore(const struct file *const file, const struct pattern
                                 printf("%" PRIuSIZ ":", total_read + i - pattern->length);
                             printf("%.*s\n", (int) pattern->length, pattern->string);
                         } else {
-                            print_file_line(file, total_read + i, line_byte_offset, &last_line_byte_offset, ctx->print_byte_offset);
+                            print_file_line(file, total_read + i, buffer, BUFFER_SIZE, buffer_read_size, i, ctx->print_byte_offset, &last_line);
                         }
                     }
                 }
             }
-
-            if (buffer[i] == LF)
-                line_byte_offset = total_read + i;
 
             if (i < buffer_read_size)
                 i += MAX(delta_1[buffer[i]], delta_2[j]);

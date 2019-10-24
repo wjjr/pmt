@@ -11,8 +11,9 @@
 #define MAX_PATTERN_LENGTH (BUFFER_SIZE / 2u - 1u)
 
 usize run_brute_force(const struct file *file, const struct pattern *pattern, const struct search_context *ctx) {
-    usize i, j, buffer_read_size, total_read = 0, total_matches = 0, line_byte_offset = 0, *last_line_byte_offset = NULL;
+    usize i, j, buffer_read_size, total_read = 0, total_matches = 0;
     byte *buffer = malloc(BUFFER_SIZE);
+    struct line last_line = {-1, -1};
 
     for (j = 0; (buffer_read_size = fread(buffer + j, 1, BUFFER_SIZE - j, file->fp)) > 0; total_read += buffer_read_size)
         for (i = 0; i < buffer_read_size; ++i, j = 0) {
@@ -27,7 +28,7 @@ usize run_brute_force(const struct file *file, const struct pattern *pattern, co
                             printf("%" PRIuSIZ ":", total_read + i + j - pattern->length);
                         printf("%.*s\n", (int) pattern->length, pattern->string);
                     } else
-                        print_file_line(file, total_read + i + j, line_byte_offset, &last_line_byte_offset, ctx->print_byte_offset);
+                        print_file_line(file, total_read + i + j, buffer, BUFFER_SIZE, buffer_read_size, i + j, ctx->print_byte_offset, &last_line);
                 }
             } else if ((i + j) >= buffer_read_size) {
                 memcpy(&buffer[0], &buffer[i], j);

@@ -117,8 +117,9 @@ static const struct state *build_dfa(const struct pattern *const pattern, const 
 }
 
 static usize run_ukkonen(const struct state *const dfa, const struct file *const file, const struct search_context *const ctx) {
-    usize i, buffer_read_size, total_read = 0, total_matches = 0, line_byte_offset = 0, *last_line_byte_offset = NULL;
+    usize i, buffer_read_size, total_read = 0, total_matches = 0;
     byte *buffer = malloc(BUFFER_SIZE);
+    struct line last_line = {-1, -1};
     const struct state *s;
 
     for (s = dfa; (buffer_read_size = fread(buffer, 1, BUFFER_SIZE, file->fp)) > 0; total_read += buffer_read_size)
@@ -127,11 +128,8 @@ static usize run_ukkonen(const struct state *const dfa, const struct file *const
                 ++total_matches;
 
                 if (!ctx->only_count)
-                    print_file_line(file, total_read + i, line_byte_offset, &last_line_byte_offset, ctx->print_byte_offset);
+                    print_file_line(file, total_read + i, buffer, BUFFER_SIZE, buffer_read_size, i, ctx->print_byte_offset, &last_line);
             }
-
-            if (buffer[i] == LF)
-                line_byte_offset = total_read + i;
         }
 
     log_debug(DEBUG, "%" PRIuSIZ " bytes read from '%s'", total_read, file->name);
