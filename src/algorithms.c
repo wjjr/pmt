@@ -4,10 +4,12 @@
 #include <string.h>
 #include "algorithms/aho_corasick.h"
 #include "algorithms/boyer_moore.h"
+#include "algorithms/brute_force.h"
 #include "algorithms/ukkonen.h"
 #include "algorithms/wu_manber.h"
 
 static const struct algorithm algorithms[] = {
+        {"bf",  "Brute-Force",                         0, 0, &brute_force_search},
         {"ac",  "Aho-Corasick (1975)",                 0, 1, &aho_corasick_search},
         {"bm",  "Boyer-Moore (1977)",                  0, 0, &boyer_moore_search},
         {"uk",  "Ukkonen (1985)",                      1, 0, &ukkonen_search},
