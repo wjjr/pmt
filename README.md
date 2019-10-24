@@ -4,10 +4,12 @@ Pattern Matching Tool
 
 Algorithms
 ----------
+- `bf`: Brute-force
 - `ac`: Aho-Corasick (1975)
 - `bm`: Boyer-Moore (1977)
 - `uk`: Ukkonen (1985)
-- `wu`: ~~Wu-Manber (1992)~~ (Not implemented yet)
+- `so`: Shift-Or (Baeza-Yates–Gonnet, 1992)
+- `wm`: Wu-Manber (1992)
 
 Build
 -----
