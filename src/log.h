@@ -31,7 +31,7 @@ void log_silence(void);
 
 void _PRINTF_FORMAT(2, 3) log_print(enum log_level, const char *message_format, ...);
 
-void _PRINTF_FORMAT(3, 4) die(unsigned char status, int err_num, const char *message_format, ...);
+void _PRINTF_FORMAT(3, 4) __attribute__((noreturn)) die(unsigned char status, int err_num, const char *message_format, ...);
 
 #ifndef __PMT_DEBUG
 static __inline void _PRINTF_FORMAT(2, 3) log_debug(enum log_level log_level __attribute__((unused)), const char *message_format __attribute__((unused)), ...) {}

@@ -8,7 +8,7 @@
 #include "utils/queue.h"
 #include "../log.h"
 
-#define HASH_MASK 0x1FFFu
+#define HASH_MASK 0x1FFFu  /* 8192 - 1 */
 #define HASH_SIZE (HASH_MASK + 1)
 
 /*// state { //*/
@@ -19,7 +19,7 @@ struct state {
     bool is_final;
 };
 
-static struct state *state_new(const uint_8 *const column, const bool is_final) {
+static __inline struct state *state_new(const uint_8 *const column, const bool is_final) {
     static usize index = 0;
     struct state *s = malloc(sizeof(struct state));
 
@@ -118,7 +118,7 @@ static const struct state *build_dfa(const struct pattern *const pattern, const 
 
 static usize run_ukkonen(const struct state *const dfa, const struct file *const file, const struct search_context *const ctx) {
     usize i, buffer_read_size, total_read = 0, total_matches = 0;
-    byte *buffer = malloc(BUFFER_SIZE);
+    byte buffer[BUFFER_SIZE];
     struct line last_line = {-1, -1};
     const struct state *s;
 
@@ -137,6 +137,8 @@ static usize run_ukkonen(const struct state *const dfa, const struct file *const
 
     if (ferror(file->fp))
         die(EXIT_FAILURE, EIO, "%s", file->name);
+    else if (fseek(file->fp, 0L, SEEK_SET))
+        die(EXIT_FAILURE, errno, "%s", file->name);
 
     return total_matches;
 }

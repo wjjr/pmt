@@ -35,5 +35,5 @@ const struct algorithm *get_algorithm(const char *const algorithm_id) {
 }
 
 const struct algorithm *choose_algorithm(const struct search_context *const ctx) {
-    return get_algorithm(ctx->edit_distance > 0 ? "wm" : (ctx->num_patterns > 1 ? "ac" : "bm"));
+    return get_algorithm(ctx->edit_distance > 0 ? "wm" : (ctx->num_patterns > 1 ? "ac" : (ctx->patterns[0].length < 4 ? "so" : "bm")));
 }

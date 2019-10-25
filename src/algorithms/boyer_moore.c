@@ -2,6 +2,7 @@
 #include "boyer_moore.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <errno.h>
 #include "utils/common.h"
 #include "../log.h"
@@ -21,20 +22,37 @@ static void build_delta(const struct pattern *pattern) {
     for (i = 0; i < pattern->length; ++i)
         delta_0[pattern->string[i]] = delta_1[pattern->string[i]] = pattern->length - i - 1;
 
-    delta_0[pattern->string[pattern->length - 1]] = BUFFER_SIZE + pattern->length;
+    delta_0[pattern->string[pattern->length - 1]] = MAX(BUFFER_SIZE, pattern->length) << 1u;
 
-    /* FIXME: Build delta_2 table */
-    delta_2 = calloc(pattern->length, sizeof(usize));
+    if (delta_2)
+        free(delta_2);
+
+    if ((delta_2 = calloc(pattern->length, sizeof(usize)))) {
+        /* FIXME: Build delta_2 table */
+    } else {
+        log_print(WARN, "bm: %s: continuing without delta_2 table", strerror(ENOMEM));
+    }
 }
 
 static usize run_boyer_moore(const struct file *const file, const struct pattern *const pattern, const struct search_context *const ctx) {
-    usize i, j, k, buffer_read_size, total_read = 0, total_matches = 0, buffer_size = pattern->length < BUFFER_SIZE ? BUFFER_SIZE : ((pattern->length + 4194303) & -(USIZE_C(4194304)));
-    byte *buffer = malloc(buffer_size * 2), *back_buffer = &buffer[buffer_size], *swp_buffer;
+    usize i, j, k, buffer_read_size, total_read = 0, total_matches = 0, buffer_size = (MAX(BUFFER_SIZE, pattern->length) + 4095) & -USIZE_C(4096);
+    byte *buffer_p = malloc(buffer_size * 2), *buffer, *back_buffer, *swp_buffer;
     struct line last_line = {-1, -1};
-    const usize large = BUFFER_SIZE + pattern->length;
-    bool found = false;
+    const usize large = MAX(BUFFER_SIZE, pattern->length) << 1u;
+    bool found;
 
-    for (i = 0; (buffer_read_size = fread(buffer, 1, buffer_size, file->fp)) > 0;) {
+    if (!buffer_p) {
+        if (delta_2) {
+            log_print(WARN, "bm: %s: freeing delta_2 table and trying again", strerror(ENOMEM));
+            free(delta_2);
+            buffer_p = malloc(buffer_size * 2);
+        }
+
+        if (!buffer_p)
+            die(EXIT_FAILURE, ENOMEM, "bm");
+    }
+
+    for (buffer = buffer_p, back_buffer = &buffer_p[buffer_size], i = 0; (buffer_read_size = fread(buffer, 1, buffer_size, file->fp)) > 0;) {
         while (i < buffer_read_size) {
             for (j = pattern->length - 1, found = false; i < buffer_read_size; i += delta_0[buffer[i]]);
 
@@ -65,7 +83,7 @@ static usize run_boyer_moore(const struct file *const file, const struct pattern
             }
 
             if (i < buffer_read_size)
-                i += MAX(delta_1[buffer[i]], delta_2[j]);
+                i += MAX(delta_1[buffer[i]], delta_2 ? delta_2[j] : 0);
         }
 
         total_read += buffer_read_size;
@@ -81,6 +99,10 @@ static usize run_boyer_moore(const struct file *const file, const struct pattern
 
     if (ferror(file->fp))
         die(EXIT_FAILURE, EIO, "%s", file->name);
+    else if (fseek(file->fp, 0L, SEEK_SET))
+        die(EXIT_FAILURE, errno, "%s", file->name);
+
+    free(buffer_p);
 
     return total_matches;
 }

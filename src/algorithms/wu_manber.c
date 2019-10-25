@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include "shift_or.h"
 #include "utils/common.h"
@@ -11,21 +10,20 @@
 
 static usize run_wu_manber(const usize *const masks, const struct file *const file, const struct pattern *const pattern, const struct search_context *const ctx) {
     usize i, j, buffer_read_size, total_read = 0, total_matches = 0;
-    byte *const buffer = malloc(BUFFER_SIZE);
+    byte buffer[BUFFER_SIZE];
     struct line last_line = {-1, -1};
-    usize *s_mask = malloc((ctx->edit_distance + 1u) * sizeof(usize)), *s_mask_prev = malloc((ctx->edit_distance + 1u) * sizeof(usize)), *s_mask_swp;
-    const usize shift = pattern->length - 1u, all_set_mask = SHIFT_OR_BIT_MASK(pattern->length);
+    const usize shift = pattern->length - 1u, s_mask_size = (ctx->edit_distance + 1u) * sizeof(usize);
+    usize *s_mask = malloc(s_mask_size), *s_mask_prev = malloc(s_mask_size), *s_mask_swp;
 
-
-    for (s_mask_prev[0] = all_set_mask, i = 1; i < ctx->edit_distance; ++i)
+    for (s_mask_prev[0] = SHIFT_OR_BIT_MASK(pattern->length), i = 1; i < ctx->edit_distance; ++i)
         s_mask_prev[i] = s_mask_prev[0] << i;
 
     for (; (buffer_read_size = fread(buffer, 1, BUFFER_SIZE, file->fp)) > 0; total_read += buffer_read_size)
         for (i = 0; i < buffer_read_size; ++i) {
-            s_mask[0] = (s_mask_prev[0] << 1u & all_set_mask) | masks[buffer[i]];
+            s_mask[0] = (s_mask_prev[0] << 1u) | masks[buffer[i]];
 
             for (j = 1; j <= ctx->edit_distance; ++j)
-                s_mask[j] = ((s_mask_prev[j] << 1u & all_set_mask) | masks[buffer[i]]) & (s_mask_prev[j - 1] << 1u & all_set_mask) & (s_mask[j - 1] << 1u & all_set_mask) & s_mask_prev[j - 1];
+                s_mask[j] = ((s_mask_prev[j] << 1u) | masks[buffer[i]]) & (s_mask_prev[j - 1] << 1u) & (s_mask[j - 1] << 1u) & s_mask_prev[j - 1];
 
             if (!((s_mask[ctx->edit_distance] >> shift) & 1u)) {
                 ++total_matches;
@@ -44,6 +42,11 @@ static usize run_wu_manber(const usize *const masks, const struct file *const fi
 
     if (ferror(file->fp))
         die(EXIT_FAILURE, EIO, "%s", file->name);
+    else if (fseek(file->fp, 0L, SEEK_SET))
+        die(EXIT_FAILURE, errno, "%s", file->name);
+
+    free(s_mask);
+    free(s_mask_prev);
 
     return total_matches;
 }

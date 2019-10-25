@@ -45,7 +45,7 @@ void build_pattern_mask(usize *const masks, const struct pattern *const pattern)
 
 static usize run_shift_or(const usize *const masks, const struct file *const file, const struct pattern *const pattern, const struct search_context *const ctx) {
     usize i, buffer_read_size, total_read = 0, total_matches = 0;
-    byte *const buffer = malloc(BUFFER_SIZE);
+    byte buffer[BUFFER_SIZE];
     struct line last_line = {-1, -1};
     usize s_mask = SHIFT_OR_BIT_MASK(pattern->length);
     const usize shift = pattern->length - 1u;
@@ -73,6 +73,8 @@ static usize run_shift_or(const usize *const masks, const struct file *const fil
 
     if (ferror(file->fp))
         die(EXIT_FAILURE, EIO, "%s", file->name);
+    else if (fseek(file->fp, 0L, SEEK_SET))
+        die(EXIT_FAILURE, errno, "%s", file->name);
 
     return total_matches;
 }

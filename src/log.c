@@ -65,6 +65,8 @@ void die(const unsigned char status, const int errnum, const char *const message
     va_start(args, message_format);
     error_log(FATAL, status, errnum, message_format, args);
     va_end(args);
+
+    exit(EXIT_FAILURE);
 }
 
 #ifdef __PMT_DEBUG

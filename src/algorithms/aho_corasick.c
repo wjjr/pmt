@@ -65,10 +65,8 @@ static const struct state *build_sm(const struct pattern *const patterns, const 
                     }
                 }
 
-                q = queue_push(q, t);
+                queue_push(q, t);
             }
-
-    free(q);
     /* } */
 
     /* TODO: construct deterministic finite automaton */
@@ -78,7 +76,7 @@ static const struct state *build_sm(const struct pattern *const patterns, const 
 
 static usize run_aho_corasick(const struct state *const sm, const struct file *const file, const struct search_context *const ctx) {
     usize i, j, buffer_read_size, total_read = 0, total_matches = 0, max_pattern_length;
-    byte *buffer = malloc(BUFFER_SIZE);
+    byte buffer[BUFFER_SIZE];
     struct line last_line = {-1, -1};
     const struct state *s, *t, *u = NULL;
     const struct pattern *pattern = NULL;
@@ -123,6 +121,8 @@ static usize run_aho_corasick(const struct state *const sm, const struct file *c
 
     if (ferror(file->fp))
         die(EXIT_FAILURE, EIO, "%s", file->name);
+    else if (fseek(file->fp, 0L, SEEK_SET))
+        die(EXIT_FAILURE, errno, "%s", file->name);
 
     return total_matches;
 }

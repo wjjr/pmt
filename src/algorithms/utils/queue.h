@@ -47,7 +47,8 @@ static __inline __attribute__((unused)) void *queue_pop(struct queue *q) {
         }
 
         free(q_tail);
-    }
+    } else
+        free(q);
 
     return s;
 }

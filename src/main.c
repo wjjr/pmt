@@ -24,7 +24,7 @@ static const struct option longopts[] = {
         {NULL,            no_argument,       NULL, '\0'}
 };
 
-static void usage(const int status, const char *const progname) {
+static void __attribute__((noreturn)) usage(const int status, const char *const progname) {
     const struct algorithm *algorithms, *algorithm;
     int i;
 
@@ -86,7 +86,6 @@ int main(int argc, char *argv[]) {
                 break;
             case 'h':
                 usage(EXIT_SUCCESS, progname);
-                break;
             case 'o':
                 only_matching = true;
                 break;
@@ -136,11 +135,13 @@ int main(int argc, char *argv[]) {
     if (optind >= argc) /* user has not specified any files */
         usage(EXIT_MISTAKE, progname);
 
-    if (edit_distance > 0 && algorithm != NULL && !algorithm->approximate)
-        die(EXIT_MISTAKE, 0, "%s: algorithm does not support approximate matching", algorithm->id);
+    if (algorithm != NULL) {
+        if (edit_distance > 0 && !algorithm->approximate)
+            die(EXIT_MISTAKE, 0, "%s: algorithm does not support approximate matching", algorithm->id);
 
-    if (num_patterns > 1 && algorithm != NULL && !algorithm->parallel)
-        log_print(WARN, "%s: algorithm does not support parallel search", algorithm->id);
+        if (num_patterns > 1 && !algorithm->parallel)
+            log_print(INFO, "%s: algorithm does not support parallel search", algorithm->id);
+    }
 
     if (num_patterns == 0) {
         num_patterns = 1;
@@ -181,13 +182,15 @@ int main(int argc, char *argv[]) {
     context->only_matching = only_matching;
     context->print_byte_offset = print_byte_offset;
 
-    if (algorithm == NULL)
+    if (algorithm == NULL) {
         algorithm = choose_algorithm(context);
+        log_print(INFO, "%s: chose algorithm %s: %s", progname, algorithm->id, algorithm->name);
+    }
 
     log_debug(DEBUG, "algorithm=%s, only_count=%s, only_matching=%s, print_byte_offset=%s, edit_distance=%" PRIu8 ", num_patterns=%" PRIuSIZ ", num_files=%" PRIuSIZ,
               algorithm->id, only_show_count ? "true" : "false", only_matching ? "true" : "false", print_byte_offset ? "true" : "false", edit_distance, num_patterns, num_files);
-    for (i = 0; i < num_patterns; ++i) log_debug(DEBUG, "pattern %" PRIuSIZ ": |%s| (length: %" PRIuSIZ " bytes)", i + 1, patterns[i].string, patterns[i].length);
-    for (i = 0; i < num_files; ++i) log_debug(DEBUG, "filename %" PRIuSIZ ": |%s| (size: %" PRIuSIZ " bytes)", i + 1, files[i].name, files[i].size);
+    for (i = 0; i < num_patterns; ++i) log_debug(DEBUG, "pattern %" PRIuSIZ ": \"%s\" (length: %" PRIuSIZ " bytes)", i + 1, (patterns[i].length < 65) ? patterns[i].string : (byte *) "...", patterns[i].length);
+    for (i = 0; i < num_files; ++i) log_debug(DEBUG, "filename %" PRIuSIZ ": \"%s\" (size: %" PRIuSIZ " bytes)", i + 1, files[i].name, files[i].size);
 
     return algorithm->search(context);
 }

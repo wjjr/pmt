@@ -52,8 +52,8 @@ void print_file_line(const struct file *const file, const usize file_offset, con
         return;
 
     fgetpos(file->fp, &fpos);
-    tmp_buffer = malloc(buffer_capacity);
-    line = find_line(buffer, buffer_size, buffer_index, file_offset);
+    tmp_buffer = malloc(buffer_capacity); /* FIXME: allocate exactly BUFFER_SIZE bytes of memory */
+    line = find_line(buffer, buffer_size, buffer_index, file_offset); /* TODO: use the pattern length to narrow the search area */
 
     if (line.beg < 0) {
         file_seek(file, (ssize) -(buffer_size), SEEK_CUR);
