@@ -28,3 +28,9 @@ clean:
 	@rm -rf $(OBJ_DIR) $(OUT_DIR) $(DIST_TGZ)
 dist:
 	@tar --create --gzip --owner=0 --group=0 --numeric-owner --xform 's:^\./::' --mtime='$(shell date -Is)' --file=$(DIST_TGZ) -- $(EXTRAS) $(SRC_DIR)
+test:
+	@./run-tests.sh false false
+test-onlymatching:
+	@./run-tests.sh false true
+test-runtime:
+	@./run-tests.sh true
